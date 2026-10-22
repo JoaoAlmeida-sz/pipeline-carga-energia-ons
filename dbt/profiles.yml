@@ -1,0 +1,24 @@
+ons_carga_energia:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'ONS_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ONS_ENERGIA') }}"
+      schema: ANALYTICS
+      authenticator: externalbrowser
+      threads: 2
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'ONS_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ONS_ENERGIA') }}"
+      schema: ANALYTICS
+      password: "{{ env_var('SNOWFLAKE_PAT') }}"
+      threads: 2
+

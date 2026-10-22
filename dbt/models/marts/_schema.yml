@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: dim_data
+    description: Uma linha por dia disponível na fonte.
+    columns:
+      - name: DATA_KEY
+        data_tests: [not_null, unique]
+      - name: DATA
+        data_tests: [not_null, unique]
+  - name: dim_subsistema
+    description: Uma linha por subsistema do Sistema Interligado Nacional.
+    columns:
+      - name: SUBSISTEMA_KEY
+        data_tests: [not_null, unique]
+      - name: SUBSISTEMA
+        data_tests: [not_null]
+  - name: fct_carga_diaria
+    description: Uma linha por dia e subsistema. Carga em MWmed, sem somar dias.
+    columns:
+      - name: DATA_KEY
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: DATA_KEY
+      - name: SUBSISTEMA_KEY
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_subsistema')
+                field: SUBSISTEMA_KEY
+      - name: CARGA_MWMED
+        data_tests: [not_null]
+  - name: mart_carga_mensal
+    description: Média da carga diária em MWmed por mês e subsistema; não inclui meses sem observações.
+    columns:
+      - name: INICIO_MES
+        data_tests: [not_null]
+      - name: SUBSISTEMA_KEY
+        data_tests: [not_null]
+

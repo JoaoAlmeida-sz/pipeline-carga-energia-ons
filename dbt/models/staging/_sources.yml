@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: ons
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'ONS_ENERGIA') }}"
+    schema: RAW
+    tables:
+      - name: carga_energia_diaria
+        identifier: CARGA_ENERGIA_DIARIA
+        columns:
+          - name: ID_SUBSISTEMA
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['N', 'NE', 'S', 'SE']
+          - name: DIN_INSTANTE
+            data_tests:
+              - not_null
+          - name: VAL_CARGAENERGIAMWMED
+            data_tests:
+              - not_null
+

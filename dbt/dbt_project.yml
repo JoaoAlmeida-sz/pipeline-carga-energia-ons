@@ -1,0 +1,15 @@
+name: ons_carga_energia
+version: '1.0.0'
+config-version: 2
+profile: ons_carga_energia
+model-paths: ["models"]
+test-paths: ["tests"]
+clean-targets: ["target", "logs"]
+
+models:
+  ons_carga_energia:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+
