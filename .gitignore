@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+dbt/target/
+dbt/logs/
+data/
+secrets/
+logs/
+config/
+.DS_Store
+
