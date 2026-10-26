@@ -31,10 +31,16 @@ def ons_carga_diaria():
 
     @task(retries=1)
     def modelar_e_testar() -> None:
-        subprocess.run(
+        resultado = subprocess.run(
             ["dbt", "build", "--project-dir", "/opt/airflow/dbt", "--profiles-dir", "/opt/airflow/dbt"],
-            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
         )
+        token = os.getenv("SNOWFLAKE_PAT", "")
+        saida = resultado.stdout.replace(token, "[REDACTED]") if token else resultado.stdout
+        print(saida, flush=True)
+        resultado.check_returncode()
 
     ingerir() >> modelar_e_testar()
 
