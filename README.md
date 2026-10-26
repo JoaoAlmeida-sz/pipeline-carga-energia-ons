@@ -30,6 +30,8 @@ O fluxo carrega anos a partir de 2024. Essa escolha evita comparar diretamente p
 - No dbt: chaves únicas nas dimensões, relacionamentos da fato, grão diário e carga positiva.
 - Na automação: testes Python no GitHub Actions; o Airflow só constrói os modelos depois de uma carga bem-sucedida.
 
+Para conferir o resultado completo no Snowflake, execute [`sql/quality_audit.sql`](sql/quality_audit.sql). Os indicadores de erro devem ser zero.
+
 ## Executar
 
 1. Execute [`sql/bootstrap.sql`](sql/bootstrap.sql) no Snowflake. Ele cria um warehouse **X-Small** com suspensão automática após 60 segundos, o banco e os schemas.
