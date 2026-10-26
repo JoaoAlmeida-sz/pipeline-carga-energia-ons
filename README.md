@@ -35,6 +35,7 @@ Para conferir o resultado completo no Snowflake, execute [`sql/quality_audit.sql
 ## Executar
 
 1. Execute [`sql/bootstrap.sql`](sql/bootstrap.sql) no Snowflake. Ele cria um warehouse **X-Small** com suspensão automática após 60 segundos, o banco e os schemas.
+   Para a automação, execute também [`sql/setup_pipeline_access.sql`](sql/setup_pipeline_access.sql). Ele cria uma role restrita ao projeto e uma política de PAT para o usuário que executar o script.
 2. Copie `.env.example` para `.env` e preencha conta, usuário, role e PAT do Snowflake. Use uma role com acesso só aos objetos do projeto. Nunca publique `.env` ou um token.
 3. Para validar um CSV local sem conectar ao Snowflake: `python -m ons_carga.ingest --years 2026 --file caminho/para/CARGA_ENERGIA_2026.csv --dry-run` (com `PYTHONPATH=src`).
 4. Com WSL 2 e Docker Desktop disponíveis no Windows, use `docker compose up --build -d`. O painel do Airflow ficará em `http://localhost:8080`. O usuário é `admin`; a senha gerada fica em `config/simple_auth_manager_passwords.json.generated`.
