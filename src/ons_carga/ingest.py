@@ -9,15 +9,20 @@ import io
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from urllib.request import Request, urlopen
+from zoneinfo import ZoneInfo
 
 
 BASE_URL = "https://ons-aws-prod-opendata.s3.amazonaws.com/dataset/carga_energia_di"
 COLUNAS = {"id_subsistema", "nom_subsistema", "din_instante", "val_cargaenergiamwmed"}
 SUBSISTEMAS = {"N", "NE", "S", "SE"}
+
+
+def ano_corrente() -> int:
+    return datetime.now(ZoneInfo("America/Sao_Paulo")).year
 
 
 @dataclass(frozen=True)
@@ -29,7 +34,7 @@ class Leitura:
 
 
 def url_ano(ano: int) -> str:
-    if ano < 2000 or ano > date.today().year:
+    if ano < 2000 or ano > ano_corrente():
         raise ValueError(f"Ano fora da série disponível: {ano}")
     return f"{BASE_URL}/CARGA_ENERGIA_{ano}.csv"
 
@@ -84,7 +89,7 @@ def validar_csv(conteudo: bytes, ano: int) -> list[Leitura]:
         if codigos_por_dia.get(dia) != SUBSISTEMAS:
             raise ValueError(f"Dia ausente ou incompleto: {dia}")
         dia += timedelta(days=1)
-    if ano < date.today().year and ultimo != date(ano, 12, 31):
+    if ano < ano_corrente() and ultimo != date(ano, 12, 31):
         raise ValueError(f"Ano histórico incompleto: {ano} termina em {ultimo}")
     return leituras
 
@@ -101,14 +106,14 @@ def arquivar(conteudo: bytes, ano: int, pasta: Path) -> tuple[Path, str]:
 def conectar_snowflake():
     import snowflake.connector
 
-    obrigatorias = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_WAREHOUSE", "SNOWFLAKE_DATABASE")
+    obrigatorias = ("SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_ROLE", "SNOWFLAKE_WAREHOUSE", "SNOWFLAKE_DATABASE")
     ausentes = [nome for nome in obrigatorias if not os.getenv(nome)]
     if ausentes:
         raise ValueError(f"Variáveis Snowflake ausentes: {', '.join(ausentes)}")
     parametros = {
         "account": os.environ["SNOWFLAKE_ACCOUNT"],
         "user": os.environ["SNOWFLAKE_USER"],
-        "role": os.getenv("SNOWFLAKE_ROLE", "ACCOUNTADMIN"),
+        "role": os.environ["SNOWFLAKE_ROLE"],
         "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         "database": os.environ["SNOWFLAKE_DATABASE"],
         "schema": "RAW",
@@ -135,7 +140,7 @@ def carregar_no_snowflake(leituras: list[Leitura], ano: int, digest: str) -> Non
                     ID_SUBSISTEMA VARCHAR(3) NOT NULL,
                     NOM_SUBSISTEMA VARCHAR(60) NOT NULL,
                     DIN_INSTANTE DATE NOT NULL,
-                    VAL_CARGAENERGIAMWMED NUMBER(18, 6) NOT NULL,
+                    VAL_CARGAENERGIAMWMED NUMBER(38, 13) NOT NULL,
                     SOURCE_YEAR INTEGER NOT NULL,
                     SOURCE_SHA256 VARCHAR(64) NOT NULL,
                     LOADED_AT TIMESTAMP_TZ NOT NULL
@@ -144,7 +149,7 @@ def carregar_no_snowflake(leituras: list[Leitura], ano: int, digest: str) -> Non
             cursor.execute("""
                 CREATE TEMPORARY TABLE CARGA_LOTE (
                     ID_SUBSISTEMA VARCHAR(3), NOM_SUBSISTEMA VARCHAR(60),
-                    DIN_INSTANTE DATE, VAL_CARGAENERGIAMWMED NUMBER(18, 6)
+                    DIN_INSTANTE DATE, VAL_CARGAENERGIAMWMED NUMBER(38, 13)
                 )
             """)
             dados = [(r.subsistema, r.nome, r.dia.isoformat(), str(r.carga_mwmed)) for r in leituras]
@@ -192,7 +197,7 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path, default=Path("data/raw"))
     parser.add_argument("--dry-run", action="store_true", help="Valida e arquiva sem conectar ao Snowflake")
     args = parser.parse_args()
-    anos = args.years or list(range(int(os.getenv("START_YEAR", "2024")), date.today().year + 1))
+    anos = args.years or list(range(int(os.getenv("START_YEAR", "2024")), ano_corrente() + 1))
     if args.file and len(anos) != 1:
         parser.error("--file requer exatamente um ano em --years")
     for ano in anos:

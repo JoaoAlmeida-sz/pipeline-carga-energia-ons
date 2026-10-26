@@ -5,7 +5,7 @@ ons_carga_energia:
       type: snowflake
       account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
       user: "{{ env_var('SNOWFLAKE_USER') }}"
-      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'ONS_WH') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE', 'ONS_ENERGIA') }}"
       schema: ANALYTICS
@@ -15,7 +15,7 @@ ons_carga_energia:
       type: snowflake
       account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
       user: "{{ env_var('SNOWFLAKE_USER') }}"
-      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'ONS_WH') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE', 'ONS_ENERGIA') }}"
       schema: ANALYTICS

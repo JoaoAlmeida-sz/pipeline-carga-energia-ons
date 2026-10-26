@@ -22,12 +22,11 @@ from airflow.sdk import dag, task
 def ons_carga_diaria():
     @task(retries=2)
     def ingerir() -> None:
-        from datetime import date
-        from ons_carga.ingest import processar_ano
+        from ons_carga.ingest import ano_corrente, processar_ano
 
         inicio = int(os.getenv("START_YEAR", "2024"))
         pasta = Path(os.getenv("DATA_DIR", "/opt/airflow/data/raw"))
-        for ano in range(inicio, date.today().year + 1):
+        for ano in range(inicio, ano_corrente() + 1):
             processar_ano(ano, pasta)
 
     @task(retries=1)

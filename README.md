@@ -22,6 +22,8 @@ flowchart LR
 
 O fluxo carrega anos a partir de 2024. Essa escolha evita comparar diretamente períodos anteriores com definições diferentes: o [ONS registra mudanças metodológicas em 2021 e 2023](https://dados.ons.org.br/dataset/carga-energia). O ONS também pode revisar dias já publicados. Por isso, cada execução salva o arquivo recebido com seu hash e faz `MERGE` pela chave dia + subsistema no Snowflake.
 
+**Estado verificado em 22/10/2026:** os CSVs de 2024 a 2026 passaram pela validação Python. No Snowflake, a carga inicial por SQL produziu 4.096 linhas na RAW, 1.024 dias, 4 subsistemas, 4.096 linhas na fato e 136 linhas no mart mensal. A consulta de qualidade não encontrou dias incompletos nem chaves duplicadas. O projeto dbt passou em `dbt parse`; a DAG ainda não foi executada.
+
 ## Qualidade
 
 - Na ingestão: esquema do CSV, UTF-8, quatro subsistemas por dia, datas contínuas, chave única e carga positiva.
@@ -31,9 +33,9 @@ O fluxo carrega anos a partir de 2024. Essa escolha evita comparar diretamente p
 ## Executar
 
 1. Execute [`sql/bootstrap.sql`](sql/bootstrap.sql) no Snowflake. Ele cria um warehouse **X-Small** com suspensão automática após 60 segundos, o banco e os schemas.
-2. Copie `.env.example` para `.env` e preencha conta, usuário e role. Nunca publique `.env` ou um token.
+2. Copie `.env.example` para `.env` e preencha conta, usuário, role e PAT do Snowflake. Use uma role com acesso só aos objetos do projeto. Nunca publique `.env` ou um token.
 3. Para validar um CSV local sem conectar ao Snowflake: `python -m ons_carga.ingest --years 2026 --file caminho/para/CARGA_ENERGIA_2026.csv --dry-run` (com `PYTHONPATH=src`).
-4. Para execução diária sem navegador, configure um [programmatic access token (PAT) do Snowflake](https://docs.snowflake.com/en/user-guide/programmatic-access-tokens) em `SNOWFLAKE_PAT` e use `docker compose up --build -d`. O painel do Airflow ficará em `http://localhost:8080`.
+4. Com WSL 2 e Docker Desktop disponíveis no Windows, use `docker compose up --build -d`. O painel do Airflow ficará em `http://localhost:8080`. O usuário é `admin`; a senha gerada fica em `config/simple_auth_manager_passwords.json.generated`.
 
 A DAG `ons_carga_diaria` roda às **22h, horário de São Paulo**, carrega os anos configurados e executa `dbt build`. O [ONS publica os arquivos em CSV com licença CC BY](https://dados.ons.org.br/dataset/carga-energia); a fonte deve ser creditada ao usar os dados em dashboards.
 
