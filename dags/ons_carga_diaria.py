@@ -40,7 +40,8 @@ def ons_carga_diaria():
         token = os.getenv("SNOWFLAKE_PAT", "")
         saida = resultado.stdout.replace(token, "[REDACTED]") if token else resultado.stdout
         print(saida, flush=True)
-        resultado.check_returncode()
+        if resultado.returncode:
+            raise RuntimeError(f"dbt terminou com codigo {resultado.returncode}: {saida[-12000:]}")
 
     ingerir() >> modelar_e_testar()
 
