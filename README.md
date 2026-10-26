@@ -39,6 +39,8 @@ Para conferir o resultado completo no Snowflake, execute [`sql/quality_audit.sql
 3. Para validar um CSV local sem conectar ao Snowflake: `python -m ons_carga.ingest --years 2026 --file caminho/para/CARGA_ENERGIA_2026.csv --dry-run` (com `PYTHONPATH=src`).
 4. Com WSL 2 e Docker Desktop disponíveis no Windows, use `docker compose up --build -d`. O painel do Airflow ficará em `http://localhost:8080`. O usuário é `admin`; a senha gerada fica em `config/simple_auth_manager_passwords.json.generated`.
 
+**Sem instalação local:** o workflow [`pipeline-cloud.yml`](.github/workflows/pipeline-cloud.yml) executa a DAG em um runner Linux do GitHub. Configure os segredos `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_USER`, `SNOWFLAKE_ROLE` e `SNOWFLAKE_PAT` em *Settings → Secrets and variables → Actions*. Faça uma execução manual em *Actions → pipeline-cloud → Run workflow*. Depois de conferir o resultado, defina a variável `ONS_PIPELINE_ENABLED=true` para agendar a execução diária às 22h17 de São Paulo. O agendamento é feito pelo GitHub; o Airflow executa as tarefas da DAG em cada run. Os CSVs recebidos ficam guardados como artefatos por 30 dias.
+
 A DAG `ons_carga_diaria` roda às **22h, horário de São Paulo**, carrega os anos configurados e executa `dbt build`. O [ONS publica os arquivos em CSV com licença CC BY](https://dados.ons.org.br/dataset/carga-energia); a fonte deve ser creditada ao usar os dados em dashboards.
 
 ## Estrutura

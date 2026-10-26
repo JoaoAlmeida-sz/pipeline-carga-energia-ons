@@ -16,3 +16,12 @@ jobs:
       - name: Test ingestion contract
         run: python -m unittest discover -s tests -v
 
+  airflow-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t ons-carga-airflow .
+      - name: Load DAG
+        run: docker run --rm ons-carga-airflow python /opt/airflow/dags/ons_carga_diaria.py
+

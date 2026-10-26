@@ -1,0 +1,68 @@
+name: pipeline-cloud
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 22 * * *'
+      timezone: 'America/Sao_Paulo'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ons-carga-snowflake
+  cancel-in-progress: false
+
+jobs:
+  executar:
+    if: github.event_name == 'workflow_dispatch' || vars.ONS_PIPELINE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_PAT: ${{ secrets.SNOWFLAKE_PAT }}
+      SNOWFLAKE_WAREHOUSE: ONS_WH
+      SNOWFLAKE_DATABASE: ONS_ENERGIA
+      SNOWFLAKE_AUTH_METHOD: pat
+      DBT_TARGET: prod
+      START_YEAR: '2024'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Conferir configuração
+        shell: bash
+        run: |
+          for nome in SNOWFLAKE_ACCOUNT SNOWFLAKE_USER SNOWFLAKE_ROLE SNOWFLAKE_PAT; do
+            if [[ -z "${!nome}" ]]; then
+              echo "Segredo ausente: ${nome}" >&2
+              exit 1
+            fi
+          done
+
+      - name: Construir imagem do Airflow
+        run: docker build -t ons-carga-airflow .
+
+      - name: Executar DAG completa
+        shell: bash
+        run: |
+          mkdir -p data/raw
+          docker run --rm --user "$(id -u):0" \
+            -e _AIRFLOW_DB_MIGRATE=true \
+            -e AIRFLOW__CORE__LOAD_EXAMPLES=false \
+            -e SNOWFLAKE_ACCOUNT -e SNOWFLAKE_USER -e SNOWFLAKE_ROLE \
+            -e SNOWFLAKE_PAT -e SNOWFLAKE_WAREHOUSE -e SNOWFLAKE_DATABASE \
+            -e SNOWFLAKE_AUTH_METHOD -e DBT_TARGET -e START_YEAR \
+            -e DATA_DIR=/opt/airflow/data/raw \
+            --mount "type=bind,src=${PWD}/data,dst=/opt/airflow/data" \
+            ons-carga-airflow dags test ons_carga_diaria
+
+      - name: Guardar snapshots dos CSVs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ons-csv-${{ github.run_id }}
+          path: data/raw/*.csv
+          if-no-files-found: ignore
+          retention-days: 30
