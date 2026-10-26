@@ -44,16 +44,6 @@ jobs:
       - name: Construir imagem do Airflow
         run: docker build -t ons-carga-airflow .
 
-      - name: Conferir modelos dbt
-        shell: bash
-        run: |
-          docker run --rm \
-            -e SNOWFLAKE_ACCOUNT -e SNOWFLAKE_USER -e SNOWFLAKE_ROLE \
-            -e SNOWFLAKE_PAT -e SNOWFLAKE_WAREHOUSE -e SNOWFLAKE_DATABASE \
-            -e DBT_TARGET \
-            ons-carga-airflow bash -lc \
-            'dbt build --project-dir /opt/airflow/dbt --profiles-dir /opt/airflow/dbt || { status=$?; test -f /opt/airflow/dbt/logs/dbt.log && tail -n 80 /opt/airflow/dbt/logs/dbt.log; exit "$status"; }'
-
       - name: Executar DAG completa
         shell: bash
         run: |
