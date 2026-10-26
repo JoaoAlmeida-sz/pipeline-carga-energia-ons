@@ -22,7 +22,13 @@ flowchart LR
 
 O fluxo carrega anos a partir de 2024. Essa escolha evita comparar diretamente períodos anteriores com definições diferentes: o [ONS registra mudanças metodológicas em 2021 e 2023](https://dados.ons.org.br/dataset/carga-energia). O ONS também pode revisar dias já publicados. Por isso, cada execução salva o arquivo recebido com seu hash e faz `MERGE` pela chave dia + subsistema no Snowflake.
 
-**Estado verificado em 22/10/2026:** os CSVs de 2024 a 2026 passaram pela validação Python. No Snowflake, a carga inicial por SQL produziu 4.096 linhas na RAW, 1.024 dias, 4 subsistemas, 4.096 linhas na fato e 136 linhas no mart mensal. A consulta de qualidade não encontrou dias incompletos nem chaves duplicadas. O projeto dbt passou em `dbt parse`; a DAG ainda não foi executada.
+**Estado verificado em 26/10/2026:** a [DAG completa no GitHub Actions](https://github.com/JoaoAlmeida-sz/pipeline-carga-energia-ons/actions/runs/40368832913) atualizou os dados de 2024 a 2026 no Snowflake e terminou com sucesso. O `dbt build` criou os modelos e passou em 21 testes, sem falhas. Os CSVs dessa execução ficaram disponíveis como artefato.
+
+## Usar no BI
+
+Os dados estão em `ONS_ENERGIA.ANALYTICS`, no Snowflake, com o warehouse `ONS_WH`. Para uma análise diária, relacione `FCT_CARGA_DIARIA` com `DIM_DATA` e `DIM_SUBSISTEMA` pelas respectivas chaves. Para acompanhar médias por mês e subsistema, use `MART_CARGA_MENSAL`. Há duas consultas de exemplo em [`sql/queries_bi.sql`](sql/queries_bi.sql).
+
+Conecte a ferramenta de BI com uma credencial própria de leitura; o PAT da automação fica reservado ao GitHub Actions.
 
 ## Qualidade
 
