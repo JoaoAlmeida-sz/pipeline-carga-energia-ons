@@ -44,7 +44,7 @@ jobs:
       - name: Construir imagem do Airflow
         run: docker build -t ons-carga-airflow .
 
-      - name: Conferir dbt e conexao
+      - name: Conferir modelos dbt
         shell: bash
         run: |
           docker run --rm \
@@ -52,7 +52,7 @@ jobs:
             -e SNOWFLAKE_PAT -e SNOWFLAKE_WAREHOUSE -e SNOWFLAKE_DATABASE \
             -e DBT_TARGET \
             ons-carga-airflow bash -lc \
-            'dbt debug --project-dir /opt/airflow/dbt --profiles-dir /opt/airflow/dbt || { status=$?; test -f /opt/airflow/dbt/logs/dbt.log && tail -n 80 /opt/airflow/dbt/logs/dbt.log; exit "$status"; }'
+            'dbt build --project-dir /opt/airflow/dbt --profiles-dir /opt/airflow/dbt || { status=$?; test -f /opt/airflow/dbt/logs/dbt.log && tail -n 80 /opt/airflow/dbt/logs/dbt.log; exit "$status"; }'
 
       - name: Executar DAG completa
         shell: bash
