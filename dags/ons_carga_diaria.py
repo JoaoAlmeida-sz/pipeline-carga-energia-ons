@@ -36,6 +36,11 @@ def ons_carga_diaria():
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            env={
+                **os.environ,
+                "DBT_ENGINE_LOG_PATH": "/tmp/ons-dbt-logs",
+                "DBT_ENGINE_TARGET_PATH": "/tmp/ons-dbt-target",
+            },
         )
         token = os.getenv("SNOWFLAKE_PAT", "")
         saida = resultado.stdout.replace(token, "[REDACTED]") if token else resultado.stdout
